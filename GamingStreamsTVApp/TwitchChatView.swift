@@ -51,6 +51,9 @@ class TwitchChatView : UIView, TwitchChatConsumer {
         super.init(coder: aDecoder)
     }
     
+    func sendMessage(message: String) {
+        self.chatMgr?.sendMessage(message)
+    }
     
     func startDisplayingMessages() {
         self.shouldConsume = true

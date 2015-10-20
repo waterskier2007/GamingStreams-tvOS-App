@@ -21,6 +21,7 @@ class TwitchChatManager {
     private var messageQueue : TwitchChatMessageQueue?
     private var emotesDictionnary = [String : NSData]() //Dictionnary that holds all the emotes (Acts as cache)
     private var consumer : TwitchChatConsumer?
+    private var channel : TwitchChannel?
     
     init(consumer : TwitchChatConsumer) {
         self.consumer = consumer
@@ -33,7 +34,12 @@ class TwitchChatManager {
     }
     
     func connectAnonymously() {
-        credentials = TwitchChatManager.generateAnonymousIRCCredentials()
+        if let token = TokenHelper.getTwitchToken(), username = TokenHelper.getTwitchUsername() {
+            credentials = IRCCredentials(username: username, password: "oauth:\(token)", nick: username.lowercaseString)
+        } else {
+            
+            credentials = TwitchChatManager.generateAnonymousIRCCredentials()
+        }
         connection!.connect(IRCEndpoint(host: "irc.twitch.tv", port: 6667), credentials: credentials!, capabilities: capabilities)
     }
     
@@ -42,9 +48,20 @@ class TwitchChatManager {
     }
     
     func joinTwitchChannel(channel : TwitchChannel) {
+        self.channel = channel
         let dispatchTime: dispatch_time_t = dispatch_time(DISPATCH_TIME_NOW, Int64(3 * Double(NSEC_PER_SEC)))
         dispatch_after(dispatchTime, dispatch_get_main_queue(), {
             self.connection?.sendStringMessage("JOIN #\(channel.name)", immedtiately: true)
+        })
+    }
+    
+    func sendMessage(message: String) {
+        guard let _ = TokenHelper.getTwitchToken(), channel = self.channel else {
+            return
+        }
+        let dispatchTime: dispatch_time_t = dispatch_time(DISPATCH_TIME_NOW, Int64(3 * Double(NSEC_PER_SEC)))
+        dispatch_after(dispatchTime, dispatch_get_main_queue(), {
+            self.connection?.sendStringMessage("PRIVMSG #\(channel.name) :\(message)", immedtiately: true)
         })
     }
     
@@ -62,11 +79,11 @@ class TwitchChatManager {
         }
         
         messageQueue?.addNewMessage(message)
-        //print("Recieved msg")
+        print("Received: \(message)")
     }
     
     private func handle433(message : IRCMessage) -> () {
-        print("Recieved 433")
+        print("Received 433")
     }
 }
 
