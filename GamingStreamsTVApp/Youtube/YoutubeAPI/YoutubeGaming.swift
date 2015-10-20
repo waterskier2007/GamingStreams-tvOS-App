@@ -12,8 +12,6 @@ import Alamofire
 class YoutubeGaming {
     
 //    YoutubeGaming.setAPIKey("AIzaSyAFLrfWAIk9gdaBbC3h7ymNpAtp9gLiWkY")
-    
-    private static var nextPageToken: String = ""
     private static var APIKey: String?
     private static let baseURL: String = "https://www.googleapis.com/youtube/v3/search"
     
@@ -34,30 +32,39 @@ class YoutubeGaming {
      
      - parameter pageToken: nil if you want the first 20 streams, otherwise, YoutubeGaming.nextPageToken
      */
-    static func getStreams(withPageToken pageToken : String = "", completionHandler : ([YoutubeStream]?, error: ServiceError?) -> ()) {
+    static func getStreams(withPageToken pageToken : String? = nil, searchTerm : String? = nil, completionHandler : ([YoutubeStream]?, nextPageToken: String?, error: ServiceError?) -> ()) {
         
         guard let key = confirmAPIKey() else {
-            completionHandler(nil, error: .APIKeyError);
+            completionHandler(nil, nextPageToken: nil, error: .APIKeyError);
             return
         }
         
-        Alamofire.request(.GET, baseURL, parameters:
-            ["part"             : "snippet",
+        var parameters: [String : AnyObject] =
+        [
+            "part"             : "snippet",
             "eventType"         : "live",
             "type"              : "video",
             "videoCategoryId"   : 20,
             "regionCode"        : "US",
             "maxResults"        : 20,
-            "pageToken"         : pageToken,
-            "key"               : key         ])
-            .responseJSON { response in
+            "key"               : key         ]
+        
+        if let pageToken = pageToken {
+            parameters["pageToken"] = pageToken
+        }
+        
+        if let searchTerm = searchTerm {
+            parameters["q"] = searchTerm
+        }
+        
+        Alamofire.request(.GET, baseURL, parameters: parameters).responseJSON { response in
                 
                 if response.result.isSuccess {
                     let parsedResponse = parseStreamResponse(response.result.value! as! [String : AnyObject])
-                    completionHandler(parsedResponse, error: nil)
+                    completionHandler(parsedResponse.streams, nextPageToken: parsedResponse.nextPageToken, error: nil)
                 } else {
                     // Handle error here
-                    completionHandler(nil, error: .URLError)
+                    completionHandler(nil, nextPageToken: nil, error: .URLError)
                 }
         }
     }
@@ -103,10 +110,10 @@ class YoutubeGaming {
         return key
     }
     
-    private static func parseStreamResponse(data : [String : AnyObject]) -> [YoutubeStream]? {
+    private static func parseStreamResponse(data : [String : AnyObject]) -> (streams: [YoutubeStream]?, nextPageToken: String?) {
         
         var parsedArray = [YoutubeStream]()
-        
+        var nextPageToken: String?
         if let nextPage = data["nextPageToken"] as? String {
             nextPageToken = nextPage
             print("Next Page Token : \(nextPageToken)")
@@ -125,6 +132,6 @@ class YoutubeGaming {
             }
         }
         
-        return parsedArray
+        return (streams: parsedArray, nextPageToken: nextPageToken)
     }
 }

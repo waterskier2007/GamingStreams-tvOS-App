@@ -95,7 +95,6 @@ class TwitchGamesViewController : LoadingViewController {
         self.searchField.textAlignment = .Center
         
         
-        
         if TokenHelper.getTwitchToken() == nil {
             self.twitchButton = UIButton(type: .System)
             self.twitchButton?.translatesAutoresizingMaskIntoConstraints = false
@@ -191,7 +190,7 @@ extension TwitchGamesViewController : UITextFieldDelegate {
             return
         }
         
-        let searchViewController = TwitchSearchResultsViewController(seatchTerm: term)
+        let searchViewController = TwitchSearchResultsViewController(searchTerm: term)
         presentViewController(searchViewController, animated: true, completion: nil)
     }
 }

@@ -1,18 +1,17 @@
 //
-//  YoutubeStreamsVIewController.swift
+//  YoutubeSearchResultsViewController.swift
 //  GamingStreamsTVApp
 //
-//  Created by Chayel Heinsen on 10/10/15.
+//  Created by Brendan Kirchner on 10/20/15.
 //  Copyright © 2015 Rivus Media Inc. All rights reserved.
 //
 
 import UIKit
 
-class YoutubeStreamsViewController : LoadingViewController {
+class YoutubeSearchResultsViewController : LoadingViewController {
     private let LOADING_BUFFER = 20
+    private var searchTerm: String!
     private var nextPageToken: String?
-    
-    private var searchField: UITextField!
     
     override var NUM_COLUMNS: Int {
         get {
@@ -34,8 +33,9 @@ class YoutubeStreamsViewController : LoadingViewController {
     
     private var streams = [YoutubeStream]()
     
-    convenience init(){
+    convenience init(searchTerm: String){
         self.init(nibName: nil, bundle: nil)
+        self.searchTerm = searchTerm
         title = "YouTube"
         YoutubeGaming.setAPIKey("AIzaSyAFLrfWAIk9gdaBbC3h7ymNpAtp9gLiWkY")
     }
@@ -65,7 +65,7 @@ class YoutubeStreamsViewController : LoadingViewController {
         self.removeErrorView()
         self.displayLoadingView("Loading Games...")
         
-        YoutubeGaming.getStreams { (streams, nextPageToken, error) -> Void in
+        YoutubeGaming.getStreams(withPageToken: nil, searchTerm: searchTerm) { (streams, nextPageToken, error) -> Void in
             
             guard let streams = streams else {
                 dispatch_async(dispatch_get_main_queue(), {
@@ -89,16 +89,16 @@ class YoutubeStreamsViewController : LoadingViewController {
     func configureViews() {
         
         //then do the search bar
-        self.searchField = UITextField(frame: CGRectZero)
-        self.searchField.translatesAutoresizingMaskIntoConstraints = false
-        self.searchField.placeholder = "Search Games"
-        self.searchField.delegate = self
-        self.searchField.textAlignment = .Center
+        //        self.searchField = UITextField(frame: CGRectZero)
+        //        self.searchField.translatesAutoresizingMaskIntoConstraints = false
+        //        self.searchField.placeholder = "Search Games"
+        //        self.searchField.delegate = self
+        //        self.searchField.textAlignment = .Center
         
         let imageView = UIImageView(image: UIImage(named: "youtube"))
         imageView.contentMode = .ScaleAspectFit
         
-        super.configureViews("Youtube", centerView: imageView, leftView: self.searchField, rightView: nil)
+        super.configureViews("Youtube", centerView: imageView, leftView: nil, rightView: nil)
         
     }
     
@@ -107,7 +107,7 @@ class YoutubeStreamsViewController : LoadingViewController {
             return
         }
         self.nextPageToken = nil
-        YoutubeGaming.getStreams(withPageToken: nextPageToken) { (streams, nextPageToken, error) -> () in
+        YoutubeGaming.getStreams(withPageToken: nextPageToken, searchTerm: searchTerm) { (streams, nextPageToken, error) -> () in
             self.nextPageToken = nextPageToken
             guard let streams = streams else {
                 return
@@ -149,7 +149,7 @@ class YoutubeStreamsViewController : LoadingViewController {
 
 // MARK - UICollectionViewDelegate interface
 
-extension YoutubeStreamsViewController {
+extension YoutubeSearchResultsViewController {
     
     func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
         let selectedStream = streams[(indexPath.section * NUM_COLUMNS) +  indexPath.row]
@@ -158,20 +158,4 @@ extension YoutubeStreamsViewController {
         self.presentViewController(videoViewController, animated: true, completion: nil)
     }
     
-}
-
-//////////////////////////////////////////////
-// MARK - UITextFieldDelegate interface
-//////////////////////////////////////////////
-
-extension YoutubeStreamsViewController : UITextFieldDelegate {
-    
-    func textFieldDidEndEditing(textField: UITextField) {
-        guard let term = textField.text where !term.isEmpty else {
-            return
-        }
-        
-        let searchViewController = YoutubeSearchResultsViewController(searchTerm: term)
-        presentViewController(searchViewController, animated: true, completion: nil)
-    }
 }
