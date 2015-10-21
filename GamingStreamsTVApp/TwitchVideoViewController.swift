@@ -176,7 +176,7 @@ class TwitchVideoViewController : UIViewController {
     func handleLongPress(longPressRecognizer: UILongPressGestureRecognizer) {
         if longPressRecognizer.state == UIGestureRecognizerState.Began {
             
-            self.chatView?.sendMessage("hello")
+            self.chatView?.chatMgr?.sendMessage("hello")
             
             if self.modalMenu == nil {
                 modalMenu = ModalMenuView(frame: self.view.bounds,
@@ -374,7 +374,7 @@ class TwitchVideoViewController : UIViewController {
     
     func pause() {
         
-        self.chatView?.sendMessage("test")
+        self.chatView?.chatMgr?.sendMessage("test")
         return
         if let player = self.videoPlayer {
             if player.rate == 1 {

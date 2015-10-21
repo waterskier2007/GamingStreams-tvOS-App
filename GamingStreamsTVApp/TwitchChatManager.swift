@@ -33,7 +33,7 @@ class TwitchChatManager {
         connection!.commandHandlers["433"] = handle433
     }
     
-    func connectAnonymously() {
+    func connect() {
         if let token = TokenHelper.getTwitchToken(), username = TokenHelper.getTwitchUsername() {
             credentials = IRCCredentials(username: username, password: "oauth:\(token)", nick: username.lowercaseString)
         } else {
